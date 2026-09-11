@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="az">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Together Watch ♡</title>
+
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com"
+    >
+
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com"
+        crossorigin
+    >
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Orbitron:wght@500;600;700&display=swap"
+        rel="stylesheet"
+    >
+
+    <link
+        rel="stylesheet"
+        href="/style.css"
+    >
+
+    <style>
+
+        /*
+        =====================================================
+        MP4 PLAYER
+        =====================================================
+        */
+
+        .mp4-player {
+            width: 100%;
+            height: 100%;
+            display: block;
+            background: #000;
+            object-fit: contain;
+        }
+
+        .mp4-player.hidden {
+            display: none;
+        }
+
+        /*
+        =====================================================
+        MP4 CONTROLS
+        =====================================================
+        */
+
+        .mp4-controls {
+            margin-top: 12px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .mp4-file-input {
+            flex: 1;
+            min-width: 220px;
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(145, 92, 255, 0.35);
+            background: rgba(18, 16, 38, 0.72);
+            color: white;
+        }
+
+        .mp4-file-input::file-selector-button {
+            margin-right: 10px;
+            padding: 8px 12px;
+            border: 0;
+            border-radius: 8px;
+            cursor: pointer;
+            background: #8b4cff;
+            color: white;
+            font-weight: 600;
+        }
+
+        .mp4-status {
+            width: 100%;
+            font-size: 13px;
+            color: #bd8aff;
+            min-height: 18px;
+        }
+
+        .video-source-label {
+            width: 100%;
+            margin-top: 8px;
+            margin-bottom: 4px;
+            font-size: 12px;
+            opacity: 0.7;
+            letter-spacing: 0.5px;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+    <!-- BACKGROUND -->
+
+    <div class="background">
+
+        <div class="stars"></div>
+
+        <div class="glow glow-1"></div>
+        <div class="glow glow-2"></div>
+
+        <div class="flower flower-1">🌸</div>
+        <div class="flower flower-2">🌷</div>
+        <div class="flower flower-3">🌺</div>
+        <div class="flower flower-4">🌹</div>
+        <div class="flower flower-5">🌸</div>
+        <div class="flower flower-6">🌷</div>
+
+    </div>
+
+
+    <!-- LANDING -->
+
+    <section
+        id="landing"
+        class="landing"
+    >
+
+        <div class="landing-card">
+
+            <div class="heart-logo">
+                ♡
+            </div>
+
+            <div class="eyebrow">
+                TOGETHER • ANYWHERE • TOGETHER
+            </div>
+
+            <h1>
+                Filmə <span>birlikdə</span><br>
+                baxaq.
+            </h1>
+
+            <p>
+                Eyni otaqda olunmasanız belə,
+                eyni filmi eyni anda izləyin.
+            </p>
+
+            <div class="landing-buttons">
+
+                <button
+                    id="createRoomBtn"
+                    class="primary-btn"
+                >
+                    <span>✦</span>
+                    Yeni otaq yarat
+                </button>
+
+                <button
+                    id="joinExistingBtn"
+                    class="secondary-btn"
+                >
+                    Otağa qoşul
+                </button>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- JOIN MODAL -->
+
+    <div
+        id="joinModal"
+        class="modal hidden"
+    >
+
+        <div class="modal-card">
+
+            <button
+                class="close-modal"
+                id="closeJoinModal"
+            >
+                ×
+            </button>
+
+            <div class="modal-icon">
+                ♡
+            </div>
+
+            <h2>
+                Otağa qoşul
+            </h2>
+
+            <p>
+                Dostunun göndərdiyi otaq kodunu daxil et.
+            </p>
+
+            <input
+                id="roomCodeInput"
+                class="text-input"
+                placeholder="Məsələn: A7K92P"
+                maxlength="6"
+            >
+
+            <input
+                id="joinNameInput"
+                class="text-input"
+                placeholder="Adın"
+                maxlength="30"
+            >
+
+            <button
+                id="joinRoomBtn"
+                class="primary-btn full"
+            >
+                Otağa daxil ol
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- ROOM -->
+
+    <main
+        id="roomPage"
+        class="room-page hidden"
+    >
+
+        <!-- TOP BAR -->
+
+        <header class="topbar">
+
+            <div class="brand">
+
+                <div class="brand-heart">
+                    ♡
+                </div>
+
+                <div>
+
+                    <strong>
+                        TOGETHER
+                    </strong>
+
+                    <small>
+                        WATCH
+                    </small>
+
+                </div>
+
+            </div>
+
+
+            <div class="room-info">
+
+                <span>
+                    OTAQ
+                </span>
+
+                <strong id="roomCodeDisplay">
+                    ------
+                </strong>
+
+            </div>
+
+
+            <div class="top-actions">
+
+                <button
+                    id="copyRoomBtn"
+                    class="top-btn"
+                >
+                    🔗 <span>Linki kopyala</span>
+                </button>
+
+                <button
+                    id="leaveBtn"
+                    class="top-btn danger"
+                >
+                    Çıx
+                </button>
+
+            </div>
+
+        </header>
+
+
+        <!-- CONTENT -->
+
+        <div class="room-layout">
+
+            <!-- LEFT -->
+
+            <section class="watch-section">
+
+                <div class="movie-header">
+
+                    <div>
+
+                        <div class="live-indicator">
+                            <span></span>
+                            LIVE ROOM
+                        </div>
+
+                        <h2 id="movieTitle">
+                            Film seçilməyib
+                        </h2>
+
+                    </div>
+
+                    <div
+                        id="hostBadge"
+                        class="host-badge hidden"
+                    >
+                        👑 Sən hostsan
+                    </div>
+
+                </div>
+
+
+                <!-- PLAYER -->
+
+                <div class="video-wrapper">
+
+                    <div
+                        id="player"
+                        class="youtube-player"
+                    >
+                    </div>
+
+                    <div
+                        id="playerOverlay"
+                        class="player-overlay"
+                    >
+
+                        <div class="overlay-heart">
+                            ♡
+                        </div>
+
+                        <span>
+                            Film seçilməsini gözləyirik...
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <!-- HOST CONTROLS -->
+
+                <div
+                    id="hostControls"
+                    class="host-controls hidden"
+                >
+
+                    <!-- YOUTUBE -->
+
+                    <div class="video-source-label">
+                        YOUTUBE
+                    </div>
+
+                    <div class="mp4-controls">
+
+                        <input
+                            id="videoUrlInput"
+                            class="video-input"
+                            placeholder="YouTube film linkini bura yapışdır..."
+                        >
+
+                        <button
+                            id="loadVideoBtn"
+                            class="primary-btn"
+                        >
+                            🎬 YouTube filmi qoş
+                        </button>
+
+                    </div>
+
+
+                    <!-- MP4 -->
+
+                    <div class="video-source-label">
+                        KOMPÜTERDƏN MP4
+                    </div>
+
+                    <div class="mp4-controls">
+
+                        <input
+                            id="mp4FileInput"
+                            class="mp4-file-input"
+                            type="file"
+                            accept="video/mp4,.mp4"
+                        >
+
+                        <button
+                            id="uploadMp4Btn"
+                            class="primary-btn"
+                            type="button"
+                        >
+                            📁 MP4 filmi yüklə
+                        </button>
+
+                    </div>
+
+                    <div
+                        id="mp4Status"
+                        class="mp4-status"
+                    ></div>
+
+                </div>
+
+
+                <!-- WATCH STATUS -->
+
+                <div class="watch-status">
+
+                    <div class="watching-people">
+
+                        <div
+                            id="avatarStack"
+                            class="avatar-stack"
+                        >
+                        </div>
+
+                        <div>
+
+                            <strong id="watchingCount">
+                                0 nəfər
+                            </strong>
+
+                            <span>
+                                birlikdə izləyir
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="sync-status">
+
+                        <span class="sync-dot"></span>
+
+                        <span>
+                            Sinxron izləmə aktivdir
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- CHAT -->
+
+            <aside class="chat-panel">
+
+                <div class="chat-header">
+
+                    <div>
+
+                        <div class="chat-title">
+                            Söhbət
+                        </div>
+
+                        <div class="chat-subtitle">
+                            Filmə baxarkən danışın ♡
+                        </div>
+
+                    </div>
+
+                    <div
+                        id="onlineCount"
+                        class="online-count"
+                    >
+                        0
+                    </div>
+
+                </div>
+
+
+                <div
+                    id="chatMessages"
+                    class="chat-messages"
+                >
+
+                    <div class="welcome-message">
+
+                        <div class="welcome-heart">
+                            ♡
+                        </div>
+
+                        <strong>
+                            Otağa xoş gəldin
+                        </strong>
+
+                        <span>
+                            Film başlayanda burada
+                            birlikdə söhbət edə bilərsiniz.
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <form
+                    id="chatForm"
+                    class="chat-form"
+                >
+
+                    <input
+                        id="chatInput"
+                        autocomplete="off"
+                        maxlength="500"
+                        placeholder="Bir şey yaz..."
+                    >
+
+                    <button
+                        type="submit"
+                    >
+                        ➤
+                    </button>
+
+                </form>
+
+            </aside>
+
+        </div>
+
+    </main>
+
+
+    <!-- SOCKET.IO -->
+
+    <script src="/socket.io/socket.io.js"></script>
+
+    <!-- YOUTUBE API -->
+
+    <script src="https://www.youtube.com/iframe_api"></script>
+
+    <!-- APP -->
+
+    <script src="/app.js"></script>
+
+</body>
+
+</html>
