@@ -963,15 +963,15 @@
 
 
 
-                    <!-- HOST BADGE -->
+                    <!-- BİRGƏ İDARƏETMƏ NİŞANI -->
 
                     <div
                         id="hostBadge"
                         class="host-badge hidden"
                     >
 
-                        👑
-                        Sən hostsan
+                        💫
+                        Hər ikiniz idarə edirsiniz
 
                     </div>
 
@@ -984,7 +984,10 @@
                      VIDEO PLAYER
                 ================================================= -->
 
-                <div class="video-wrapper">
+                <div
+                    class="video-wrapper"
+                    id="videoWrapper"
+                >
 
 
                     <!-- YOUTUBE PLAYER -->
@@ -1024,6 +1027,124 @@
                             Film seçilməsini gözləyirik...
                         </span>
 
+
+                    </div>
+
+
+                    <!-- SƏSLİ ƏLAQƏ STATUSU -->
+
+                    <div
+                        id="voiceStatusBar"
+                        class="voice-status-bar hidden"
+                    >
+
+                        <span
+                            id="voiceStatusText"
+                            class="voice-status-text"
+                        >
+                            🎙️ Səsli əlaqə qurulur...
+                        </span>
+
+                    </div>
+
+
+                    <!-- FİLM İDARƏETMƏ PANELİ -->
+
+                    <div
+                        id="mediaControls"
+                        class="media-controls"
+                    >
+
+                        <div class="media-progress-row">
+
+                            <input
+                                id="seekBar"
+                                class="seek-bar"
+                                type="range"
+                                min="0"
+                                max="100"
+                                value="0"
+                                step="0.1"
+                                disabled
+                            >
+
+                        </div>
+
+                        <div class="media-controls-row">
+
+                            <button
+                                id="playPauseBtn"
+                                class="media-btn play-pause-btn"
+                                type="button"
+                                title="Play / Pause"
+                                disabled
+                            >
+                                ▶️
+                            </button>
+
+                            <span
+                                id="timeDisplay"
+                                class="time-display"
+                            >
+                                0:00 / 0:00
+                            </span>
+
+                            <div class="media-controls-spacer"></div>
+
+                            <div class="volume-group">
+
+                                <button
+                                    id="muteBtn"
+                                    class="media-btn"
+                                    type="button"
+                                    title="Səsi bağla"
+                                >
+                                    🔊
+                                </button>
+
+                                <input
+                                    id="volumeSlider"
+                                    class="volume-slider"
+                                    type="range"
+                                    min="0"
+                                    max="100"
+                                    value="100"
+                                >
+
+                            </div>
+
+                            <div class="mic-group">
+
+                                <button
+                                    id="micToggleBtn"
+                                    class="media-btn mic-btn"
+                                    type="button"
+                                    title="Mikrofonu aç"
+                                >
+                                    🎙️
+                                </button>
+
+                                <button
+                                    id="voiceHangupBtn"
+                                    class="media-btn voice-hangup-btn hidden"
+                                    type="button"
+                                    title="Səsli əlaqəni bitir"
+                                >
+                                    📴
+                                </button>
+
+                            </div>
+
+                            <button
+                                id="fullscreenBtn"
+                                class="media-btn"
+                                type="button"
+                                title="Tam ekran"
+                            >
+                                ⛶
+                            </button>
+
+                        </div>
 
                     </div>
 

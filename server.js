@@ -477,6 +477,8 @@ app.post(
 
                 hostId: null,
 
+                voiceUsers: new Set(),
+
                 video: {
 
                     type: null,
@@ -1271,20 +1273,6 @@ io.on(
                 }
 
 
-                /*
-                YALNIZ HOST
-                */
-
-                if (
-                    room.hostId !==
-                    socket.id
-                ) {
-
-                    return;
-
-                }
-
-
                 videoId =
                     String(
                         videoId || ""
@@ -1487,20 +1475,6 @@ io.on(
                 }
 
 
-                /*
-                YALNIZ HOST
-                */
-
-                if (
-                    room.hostId !==
-                    socket.id
-                ) {
-
-                    return;
-
-                }
-
-
                 videoUrl =
                     String(
                         videoUrl || ""
@@ -1603,20 +1577,6 @@ io.on(
                 }
 
 
-                /*
-                YALNIZ HOST
-                */
-
-                if (
-                    room.hostId !==
-                    socket.id
-                ) {
-
-                    return;
-
-                }
-
-
                 room.video.playing =
                     true;
 
@@ -1675,20 +1635,6 @@ io.on(
 
                 if (!room) {
                     return;
-                }
-
-
-                /*
-                YALNIZ HOST
-                */
-
-                if (
-                    room.hostId !==
-                    socket.id
-                ) {
-
-                    return;
-
                 }
 
 
@@ -1753,20 +1699,6 @@ io.on(
                 }
 
 
-                /*
-                YALNIZ HOST
-                */
-
-                if (
-                    room.hostId !==
-                    socket.id
-                ) {
-
-                    return;
-
-                }
-
-
                 room.video.currentTime =
                     Math.max(
                         0,
@@ -1791,6 +1723,156 @@ io.on(
 
                         }
                     );
+
+            }
+        );
+
+
+        /*
+        =================================================
+        VOICE CHAT - MİKROFON SİQNALLAŞMASI (WebRTC)
+        =================================================
+        */
+
+        socket.on(
+            "voice-on",
+            () => {
+
+                const roomId =
+                    socket.data.roomId;
+
+                if (!roomId) {
+                    return;
+                }
+
+                const room =
+                    rooms.get(roomId);
+
+                if (!room) {
+                    return;
+                }
+
+                if (!room.voiceUsers) {
+                    room.voiceUsers = new Set();
+                }
+
+                room.voiceUsers.add(
+                    socket.id
+                );
+
+                const others =
+                    [...room.voiceUsers].filter(
+                        id => id !== socket.id
+                    );
+
+                /*
+                Yeni qoşulan artıq səsli
+                olanların siyahısını alır,
+                özü təklif (offer) göndərəcək.
+                */
+
+                socket.emit(
+                    "voice-peers",
+                    others
+                );
+
+                /*
+                Artıq səsli olanlara xəbər
+                veririk ki, yeni nəfər gəldi.
+                */
+
+                others.forEach(
+                    id => {
+
+                        io.to(id).emit(
+                            "voice-peer-joined",
+                            {
+                                peerId: socket.id,
+                                username:
+                                    socket.data.username ||
+                                    "Qonaq"
+                            }
+                        );
+
+                    }
+                );
+
+            }
+        );
+
+        socket.on(
+            "voice-off",
+            () => {
+
+                const roomId =
+                    socket.data.roomId;
+
+                if (!roomId) {
+                    return;
+                }
+
+                const room =
+                    rooms.get(roomId);
+
+                if (!room || !room.voiceUsers) {
+                    return;
+                }
+
+                room.voiceUsers.delete(
+                    socket.id
+                );
+
+                socket
+                    .to(roomId)
+                    .emit(
+                        "voice-peer-left",
+                        {
+                            peerId: socket.id
+                        }
+                    );
+
+            }
+        );
+
+        socket.on(
+            "voice-mute",
+            ({ muted }) => {
+
+                const roomId =
+                    socket.data.roomId;
+
+                if (!roomId) {
+                    return;
+                }
+
+                socket
+                    .to(roomId)
+                    .emit(
+                        "voice-peer-mute",
+                        {
+                            peerId: socket.id,
+                            muted: Boolean(muted)
+                        }
+                    );
+
+            }
+        );
+
+        socket.on(
+            "voice-signal",
+            ({ to, signal }) => {
+
+                if (!to || !signal) {
+                    return;
+                }
+
+                io.to(to).emit(
+                    "voice-signal",
+                    {
+                        from: socket.id,
+                        signal
+                    }
+                );
 
             }
         );
@@ -1894,6 +1976,27 @@ io.on(
 
                 if (!room) {
                     return;
+                }
+
+
+                if (
+                    room.voiceUsers &&
+                    room.voiceUsers.has(socket.id)
+                ) {
+
+                    room.voiceUsers.delete(
+                        socket.id
+                    );
+
+                    socket
+                        .to(roomId)
+                        .emit(
+                            "voice-peer-left",
+                            {
+                                peerId: socket.id
+                            }
+                        );
+
                 }
 
 

@@ -175,6 +175,87 @@ const avatarStack =
 const connectionStatus =
     document.getElementById("connectionStatus");
 
+const videoWrapper =
+    document.getElementById("videoWrapper");
+
+const mediaControls =
+    document.getElementById("mediaControls");
+
+const seekBar =
+    document.getElementById("seekBar");
+
+const playPauseBtn =
+    document.getElementById("playPauseBtn");
+
+const timeDisplay =
+    document.getElementById("timeDisplay");
+
+const muteBtn =
+    document.getElementById("muteBtn");
+
+const volumeSlider =
+    document.getElementById("volumeSlider");
+
+const micToggleBtn =
+    document.getElementById("micToggleBtn");
+
+const voiceHangupBtn =
+    document.getElementById("voiceHangupBtn");
+
+const fullscreenBtn =
+    document.getElementById("fullscreenBtn");
+
+const voiceStatusBar =
+    document.getElementById("voiceStatusBar");
+
+const voiceStatusText =
+    document.getElementById("voiceStatusText");
+
+
+/*
+=========================================================
+VOICE CHAT STATE
+=========================================================
+*/
+
+let localStream = null;
+
+let micEnabled = false;
+
+let micMuted = false;
+
+const peerConnections = {};
+
+const remoteAudioEls = {};
+
+const speakingDetectors = {};
+
+let audioCtx = null;
+
+const rtcConfig = {
+
+    iceServers: [
+
+        {
+            urls: [
+                "stun:stun.l.google.com:19302",
+                "stun:stun1.l.google.com:19302"
+            ]
+        }
+
+    ]
+
+};
+
+
+/*
+=========================================================
+MEDIA CONTROLS STATE
+=========================================================
+*/
+
+let isSeeking = false;
+
 
 /*
 =========================================================
@@ -1203,18 +1284,88 @@ function connectSocket() {
                 true
             );
 
+        }
+    );
 
-            addSystemMessage(
-                "Artıq sən hostsan 👑"
+
+    /*
+    =====================================================
+    VOICE CHAT SİQNALLARI
+    =====================================================
+    */
+
+    socket.on(
+        "voice-peers",
+        peerIds => {
+
+            (peerIds || []).forEach(
+                id => callPeer(id)
             );
 
 
+            if ((peerIds || []).length) {
+
+                showVoiceStatus(
+                    "🎙️ Bağlanır..."
+                );
+
+            }
+
+        }
+    );
+
+
+    socket.on(
+        "voice-peer-joined",
+        ({ username: peerName } = {}) => {
+
             showToast(
-                "Host idarəsi sənə keçdi 👑",
+                `${peerName || "Sevgilin"} səsli əlaqəyə qoşuldu 🎙️`,
                 "success"
             );
 
         }
+    );
+
+
+    socket.on(
+        "voice-peer-left",
+        ({ peerId } = {}) => {
+
+            if (peerId) {
+
+                closePeerConnection(
+                    peerId
+                );
+
+            }
+
+
+            showToast(
+                "Səsli əlaqə kəsildi",
+                "normal"
+            );
+
+        }
+    );
+
+
+    socket.on(
+        "voice-peer-mute",
+        ({ muted } = {}) => {
+
+            voiceStatusBar?.classList.toggle(
+                "partner-muted",
+                Boolean(muted)
+            );
+
+        }
+    );
+
+
+    socket.on(
+        "voice-signal",
+        handleVoiceSignal
     );
 
 
@@ -1321,8 +1472,8 @@ function setHost(
 
 
     /*
-    HƏM HOST,
-    HƏM QONAQ INPUTU GÖRÜR
+    ARTIQ HEÇ BİR MƏHDUDİYYƏT YOXDUR —
+    HƏR İKİSİ EYNİ ŞƏKİLDƏ İDARƏ EDİR
     */
 
     hostControls.classList.remove(
@@ -1330,33 +1481,15 @@ function setHost(
     );
 
 
-    if (isHost) {
-
-        hostBadge?.classList.remove(
-            "hidden"
-        );
+    hostBadge?.classList.remove(
+        "hidden"
+    );
 
 
-        if (loadVideoBtn) {
+    if (loadVideoBtn) {
 
-            loadVideoBtn.textContent =
-                "🎬 Filmi qoş";
-
-        }
-
-    } else {
-
-        hostBadge?.classList.add(
-            "hidden"
-        );
-
-
-        if (loadVideoBtn) {
-
-            loadVideoBtn.textContent =
-                "💜 Host-a göndər";
-
-        }
+        loadVideoBtn.textContent =
+            "🎬 Filmi qoş";
 
     }
 
@@ -1388,6 +1521,11 @@ function applyVideoState(
     movieTitle.textContent =
         video.title ||
         "Film";
+
+
+    setControlsEnabled(
+        true
+    );
 
 
     /*
@@ -1582,6 +1720,11 @@ function resetVideoUI() {
             player
         );
 
+
+    setControlsEnabled(
+        false
+    );
+
 }
 
 
@@ -1687,13 +1830,11 @@ function loadYouTubeVideo(
 
                 /*
                 Server oynayır deyirsə
-                host deyiliksə belə
                 playeri oynatmağa çalışırıq.
                 */
 
                 if (
-                    state?.playing &&
-                    !isHost
+                    state?.playing
                 ) {
 
                     try {
@@ -1762,7 +1903,7 @@ function loadYouTubeVideo(
 
                     autoplay: 0,
 
-                    controls: 1,
+                    controls: 0,
 
                     rel: 0,
 
@@ -1818,13 +1959,12 @@ function loadYouTubeVideo(
 
 
                             /*
-                            Qonaqdırsa server state
-                            oynayır deyirsə play
+                            Server state oynayır
+                            deyirsə davam etdiririk
                             */
 
                             if (
-                                state?.playing &&
-                                !isHost
+                                state?.playing
                             ) {
 
                                 setTimeout(
@@ -1873,25 +2013,6 @@ function handleYouTubeState(
 
     if (ignorePlayerEvents) {
         return;
-    }
-
-
-    /*
-    QONAĞIN MANUAL PLAYER KONTROLLARI
-    server tərəfindən idarə olunur.
-    */
-
-    if (!isHost) {
-
-        /*
-        Qonaq YouTube playerə basıb
-        dəyişiklik etsə geri server state
-        ilə düzəltmək üçün burada eventləri
-        özümüz emit etmirik.
-        */
-
-        return;
-
     }
 
 
@@ -2016,7 +2137,6 @@ setInterval(
         if (
             !playerReady ||
             !player ||
-            !isHost ||
             ignorePlayerEvents ||
             suppressSeekEvent ||
             !socket ||
@@ -2359,31 +2479,15 @@ function sendLoadVideoRequest(payload) {
     }
 
 
-    if (isHost) {
+    socket.emit(
+        "load-video",
+        payload
+    );
 
-        socket.emit(
-            "load-video",
-            payload
-        );
-
-        showToast(
-            "Film otağa qoşulur 🎬",
-            "success"
-        );
-
-    } else {
-
-        socket.emit(
-            "request-load-video",
-            payload
-        );
-
-        showToast(
-            "Sorğu host-a göndərildi 💌",
-            "success"
-        );
-
-    }
+    showToast(
+        "Film otağa qoşulur 🎬",
+        "success"
+    );
 
 }
 
@@ -2653,88 +2757,41 @@ if (loadVideoBtn) {
             }
 
 
-            /*
-            HOST
-            */
-
-            if (isHost) {
-
-                if (
-                    !socket ||
-                    !socket.connected
-                ) {
-
-                    showToast(
-                        "Server bağlantısı yoxdur.",
-                        "error"
-                    );
-
-                    return;
-
-                }
-
-
-                socket.emit(
-                    "load-video",
-                    {
-
-                        videoId,
-
-                        videoUrl:
-                            url,
-
-                        title:
-                            "Birlikdə izlədiyimiz film 🎬"
-
-                    }
-                );
-
+            if (
+                !socket ||
+                !socket.connected
+            ) {
 
                 showToast(
-                    "Film otağa qoşulur 🎬",
-                    "success"
+                    "Server bağlantısı yoxdur.",
+                    "error"
                 );
+
+                return;
 
             }
 
 
-            /*
-            GUEST
-            */
+            socket.emit(
+                "load-video",
+                {
 
-            else {
+                    videoId,
 
-                if (
-                    !socket ||
-                    !socket.connected
-                ) {
+                    videoUrl:
+                        url,
 
-                    showToast(
-                        "Server bağlantısı yoxdur.",
-                        "error"
-                    );
-
-                    return;
+                    title:
+                        "Birlikdə izlədiyimiz film 🎬"
 
                 }
+            );
 
 
-                socket.emit(
-                    "request-load-video",
-                    {
-
-                        videoId,
-
-                        videoUrl:
-                            url,
-
-                        title:
-                            "Birlikdə izlədiyimiz film 🎬"
-
-                    }
-                );
-
-            }
+            showToast(
+                "Film otağa qoşulur 🎬",
+                "success"
+            );
 
 
             videoUrlInput.value =
@@ -2836,18 +2893,6 @@ if (uploadMp4Btn) {
     uploadMp4Btn.addEventListener(
         "click",
         async () => {
-
-            if (!isHost) {
-
-                showToast(
-                    "MP4 yükləmək yalnız host üçün aktivdir.",
-                    "error"
-                );
-
-                return;
-
-            }
-
 
             if (
                 !socket ||
@@ -3152,12 +3197,12 @@ function loadMP4Video(
 
 
             /*
-            Qonaq üçün server playing state
+            Video artıq oynadılırsa
+            hər iki tərəf üçün davam etdirilir
             */
 
             if (
-                video.playing &&
-                !isHost
+                video.playing
             ) {
 
                 mp4PlayerElement
@@ -3200,8 +3245,7 @@ MP4 PLAY
 function handleMP4Play() {
 
     if (
-        ignorePlayerEvents ||
-        !isHost
+        ignorePlayerEvents
     ) {
 
         return;
@@ -3255,8 +3299,7 @@ MP4 PAUSE
 function handleMP4Pause() {
 
     if (
-        ignorePlayerEvents ||
-        !isHost
+        ignorePlayerEvents
     ) {
 
         return;
@@ -3327,8 +3370,7 @@ if (mp4PlayerElement) {
 
             if (
                 ignorePlayerEvents ||
-                suppressSeekEvent ||
-                !isHost
+                suppressSeekEvent
             ) {
 
                 return;
@@ -3974,6 +4016,1560 @@ function getInitial(
 
 /*
 =========================================================
+UNIFIED MEDIA CONTROLS
+YouTube + MP4 üçün ortaq idarəetmə
+=========================================================
+*/
+
+function isYouTubeActive() {
+
+    return Boolean(
+        currentVideo &&
+        currentVideo.type === "youtube" &&
+        playerReady &&
+        player
+    );
+
+}
+
+
+function isMP4Active() {
+
+    return Boolean(
+        currentVideo &&
+        currentVideo.type === "mp4" &&
+        mp4PlayerElement &&
+        mp4PlayerElement.src
+    );
+
+}
+
+
+function setControlsEnabled(
+    enabled
+) {
+
+    [
+        seekBar,
+        playPauseBtn
+    ].forEach(
+        el => {
+
+            if (!el) {
+                return;
+            }
+
+            el.disabled =
+                !enabled;
+
+        }
+    );
+
+
+    if (!enabled && timeDisplay) {
+
+        timeDisplay.textContent =
+            "0:00 / 0:00";
+
+    }
+
+}
+
+
+function togglePlayPause() {
+
+    if (isYouTubeActive()) {
+
+        try {
+
+            const state =
+                player.getPlayerState();
+
+
+            if (state === 1) {
+
+                player.pauseVideo();
+
+            } else {
+
+                player.playVideo();
+
+            }
+
+        } catch {}
+
+        return;
+
+    }
+
+
+    if (isMP4Active()) {
+
+        if (mp4PlayerElement.paused) {
+
+            mp4PlayerElement
+                .play()
+                .catch(() => {});
+
+        } else {
+
+            mp4PlayerElement.pause();
+
+        }
+
+        return;
+
+    }
+
+}
+
+
+function seekCurrentTo(
+    time
+) {
+
+    if (isYouTubeActive()) {
+
+        try {
+
+            player.seekTo(
+                time,
+                true
+            );
+
+        } catch {}
+
+
+        if (
+            socket &&
+            socket.connected
+        ) {
+
+            socket.emit(
+                "video-seek",
+                {
+                    currentTime: time
+                }
+            );
+
+        }
+
+        return;
+
+    }
+
+
+    if (isMP4Active()) {
+
+        try {
+
+            mp4PlayerElement.currentTime =
+                time;
+
+        } catch {}
+
+
+        if (
+            socket &&
+            socket.connected
+        ) {
+
+            socket.emit(
+                "video-seek",
+                {
+                    currentTime: time
+                }
+            );
+
+        }
+
+        return;
+
+    }
+
+}
+
+
+function getUnifiedCurrentTime() {
+
+    if (isYouTubeActive()) {
+
+        return safeYouTubeTime();
+
+    }
+
+
+    if (isMP4Active()) {
+
+        return Math.max(
+            0,
+            Number(
+                mp4PlayerElement.currentTime
+            ) || 0
+        );
+
+    }
+
+
+    return 0;
+
+}
+
+
+function getUnifiedDuration() {
+
+    if (isYouTubeActive()) {
+
+        try {
+
+            return Math.max(
+                0,
+                Number(
+                    player.getDuration()
+                ) || 0
+            );
+
+        } catch {
+
+            return 0;
+
+        }
+
+    }
+
+
+    if (isMP4Active()) {
+
+        return Math.max(
+            0,
+            Number(
+                mp4PlayerElement.duration
+            ) || 0
+        );
+
+    }
+
+
+    return 0;
+
+}
+
+
+function formatTime(
+    seconds
+) {
+
+    seconds =
+        Math.max(
+            0,
+            Math.floor(
+                Number(seconds) || 0
+            )
+        );
+
+
+    const mins =
+        Math.floor(
+            seconds / 60
+        );
+
+
+    const secs =
+        seconds % 60;
+
+
+    const hrs =
+        Math.floor(
+            mins / 60
+        );
+
+
+    if (hrs > 0) {
+
+        return (
+            `${hrs}:` +
+            `${String(mins % 60).padStart(2, "0")}:` +
+            `${String(secs).padStart(2, "0")}`
+        );
+
+    }
+
+
+    return (
+        `${mins}:` +
+        `${String(secs).padStart(2, "0")}`
+    );
+
+}
+
+
+function updatePlayPauseIcon() {
+
+    if (!playPauseBtn) {
+        return;
+    }
+
+
+    let playing =
+        false;
+
+
+    if (isYouTubeActive()) {
+
+        try {
+
+            playing =
+                player.getPlayerState() === 1;
+
+        } catch {}
+
+    } else if (isMP4Active()) {
+
+        playing =
+            !mp4PlayerElement.paused;
+
+    }
+
+
+    playPauseBtn.textContent =
+        playing ? "⏸️" : "▶️";
+
+}
+
+
+/*
+PROGRESS BAR / TIME - HƏR 400ms
+*/
+
+setInterval(
+    () => {
+
+        if (
+            !currentVideo ||
+            (
+                !isYouTubeActive() &&
+                !isMP4Active()
+            )
+        ) {
+
+            return;
+
+        }
+
+
+        updatePlayPauseIcon();
+
+
+        const duration =
+            getUnifiedDuration();
+
+
+        const current =
+            getUnifiedCurrentTime();
+
+
+        if (
+            timeDisplay &&
+            Number.isFinite(duration)
+        ) {
+
+            timeDisplay.textContent =
+                `${formatTime(current)} / ${formatTime(duration)}`;
+
+        }
+
+
+        if (
+            seekBar &&
+            !isSeeking &&
+            duration > 0
+        ) {
+
+            seekBar.max =
+                String(duration);
+
+            seekBar.value =
+                String(current);
+
+        }
+
+    },
+    400
+);
+
+
+if (playPauseBtn) {
+
+    playPauseBtn.addEventListener(
+        "click",
+        togglePlayPause
+    );
+
+}
+
+
+if (seekBar) {
+
+    seekBar.addEventListener(
+        "input",
+        () => {
+
+            isSeeking =
+                true;
+
+
+            const duration =
+                getUnifiedDuration();
+
+
+            if (
+                timeDisplay &&
+                duration > 0
+            ) {
+
+                timeDisplay.textContent =
+                    `${formatTime(seekBar.value)} / ${formatTime(duration)}`;
+
+            }
+
+        }
+    );
+
+
+    seekBar.addEventListener(
+        "change",
+        () => {
+
+            seekCurrentTo(
+                Number(
+                    seekBar.value
+                ) || 0
+            );
+
+
+            setTimeout(() => {
+
+                isSeeking =
+                    false;
+
+            }, 300);
+
+        }
+    );
+
+}
+
+
+/*
+=========================================================
+VOLUME
+=========================================================
+*/
+
+let lastVolumeBeforeMute =
+    100;
+
+let isMuted =
+    false;
+
+
+function applyVolume(
+    value
+) {
+
+    if (isYouTubeActive()) {
+
+        try {
+
+            player.setVolume(
+                value
+            );
+
+
+            if (value <= 0) {
+
+                player.mute();
+
+            } else {
+
+                player.unMute();
+
+            }
+
+        } catch {}
+
+    }
+
+
+    if (mp4PlayerElement) {
+
+        mp4PlayerElement.volume =
+            Math.min(
+                1,
+                Math.max(
+                    0,
+                    value / 100
+                )
+            );
+
+
+        mp4PlayerElement.muted =
+            value <= 0;
+
+    }
+
+
+    isMuted =
+        value <= 0;
+
+
+    if (muteBtn) {
+
+        muteBtn.textContent =
+            isMuted ? "🔇" : "🔊";
+
+    }
+
+}
+
+
+if (volumeSlider) {
+
+    volumeSlider.addEventListener(
+        "input",
+        () => {
+
+            applyVolume(
+                Number(
+                    volumeSlider.value
+                )
+            );
+
+        }
+    );
+
+}
+
+
+if (muteBtn) {
+
+    muteBtn.addEventListener(
+        "click",
+        () => {
+
+            if (isMuted) {
+
+                const restore =
+                    lastVolumeBeforeMute > 0 ?
+                        lastVolumeBeforeMute :
+                        100;
+
+
+                if (volumeSlider) {
+
+                    volumeSlider.value =
+                        String(restore);
+
+                }
+
+
+                applyVolume(
+                    restore
+                );
+
+            } else {
+
+                lastVolumeBeforeMute =
+                    Number(
+                        volumeSlider?.value
+                    ) || 100;
+
+
+                if (volumeSlider) {
+
+                    volumeSlider.value =
+                        "0";
+
+                }
+
+
+                applyVolume(0);
+
+            }
+
+        }
+    );
+
+}
+
+
+/*
+=========================================================
+TAM EKRAN
+=========================================================
+*/
+
+function isFullscreenActive() {
+
+    return Boolean(
+        document.fullscreenElement ||
+        document.webkitFullscreenElement
+    );
+
+}
+
+
+function toggleFullscreen() {
+
+    if (!videoWrapper) {
+        return;
+    }
+
+
+    if (!isFullscreenActive()) {
+
+        const request =
+            videoWrapper.requestFullscreen ||
+            videoWrapper.webkitRequestFullscreen;
+
+
+        if (request) {
+
+            request.call(
+                videoWrapper
+            ).catch(() => {});
+
+        }
+
+    } else {
+
+        const exit =
+            document.exitFullscreen ||
+            document.webkitExitFullscreen;
+
+
+        if (exit) {
+
+            exit.call(
+                document
+            ).catch(() => {});
+
+        }
+
+    }
+
+}
+
+
+if (fullscreenBtn) {
+
+    fullscreenBtn.addEventListener(
+        "click",
+        toggleFullscreen
+    );
+
+}
+
+
+[
+    "fullscreenchange",
+    "webkitfullscreenchange"
+].forEach(
+    eventName => {
+
+        document.addEventListener(
+            eventName,
+            () => {
+
+                const active =
+                    isFullscreenActive();
+
+
+                videoWrapper?.classList.toggle(
+                    "is-fullscreen",
+                    active
+                );
+
+
+                fullscreenBtn.textContent =
+                    active ? "⤢" : "⛶";
+
+            }
+        );
+
+    }
+);
+
+
+/*
+CONTROLS AUTO-HIDE (FULLSCREEN)
+*/
+
+let controlsHideTimer =
+    null;
+
+
+function showControlsTemporarily() {
+
+    if (!mediaControls) {
+        return;
+    }
+
+
+    mediaControls.classList.add(
+        "controls-visible"
+    );
+
+
+    clearTimeout(
+        controlsHideTimer
+    );
+
+
+    controlsHideTimer =
+        setTimeout(() => {
+
+            mediaControls.classList.remove(
+                "controls-visible"
+            );
+
+        }, 3200);
+
+}
+
+
+if (videoWrapper) {
+
+    [
+        "mousemove",
+        "touchstart",
+        "click"
+    ].forEach(
+        eventName => {
+
+            videoWrapper.addEventListener(
+                eventName,
+                showControlsTemporarily
+            );
+
+        }
+    );
+
+}
+
+
+/*
+=========================================================
+SƏSLİ ƏLAQƏ (WebRTC VOICE CHAT)
+=========================================================
+*/
+
+function ensureAudioContext() {
+
+    if (!audioCtx) {
+
+        audioCtx =
+            new (
+                window.AudioContext ||
+                window.webkitAudioContext
+            )();
+
+    }
+
+
+    return audioCtx;
+
+}
+
+
+function setupSpeakingDetector(
+    key,
+    stream,
+    onSpeaking
+) {
+
+    try {
+
+        const ctx =
+            ensureAudioContext();
+
+
+        const source =
+            ctx.createMediaStreamSource(
+                stream
+            );
+
+
+        const analyser =
+            ctx.createAnalyser();
+
+
+        analyser.fftSize =
+            512;
+
+
+        source.connect(
+            analyser
+        );
+
+
+        const data =
+            new Uint8Array(
+                analyser.frequencyBinCount
+            );
+
+
+        let rafId;
+
+
+        const loop =
+            () => {
+
+                analyser.getByteFrequencyData(
+                    data
+                );
+
+
+                const avg =
+                    data.reduce(
+                        (a, b) => a + b,
+                        0
+                    ) / data.length;
+
+
+                onSpeaking(
+                    avg > 14
+                );
+
+
+                rafId =
+                    requestAnimationFrame(
+                        loop
+                    );
+
+            };
+
+
+        loop();
+
+
+        speakingDetectors[key] = {
+            stop: () => cancelAnimationFrame(rafId)
+        };
+
+    } catch (error) {
+
+        console.log(
+            "Speaking detector xətası:",
+            error
+        );
+
+    }
+
+}
+
+
+function stopSpeakingDetector(
+    key
+) {
+
+    const detector =
+        speakingDetectors[key];
+
+
+    if (detector) {
+
+        try {
+
+            detector.stop();
+
+        } catch {}
+
+
+        delete speakingDetectors[key];
+
+    }
+
+}
+
+
+function showVoiceStatus(
+    text
+) {
+
+    if (!voiceStatusBar) {
+        return;
+    }
+
+
+    if (voiceStatusText) {
+
+        voiceStatusText.textContent =
+            text;
+
+    }
+
+
+    voiceStatusBar.classList.remove(
+        "hidden"
+    );
+
+}
+
+
+function hideVoiceStatus() {
+
+    voiceStatusBar?.classList.add(
+        "hidden"
+    );
+
+}
+
+
+function updateMicButtonUI() {
+
+    if (!micToggleBtn) {
+        return;
+    }
+
+
+    micToggleBtn.classList.remove(
+        "mic-off",
+        "mic-on",
+        "mic-muted",
+        "speaking"
+    );
+
+
+    if (!micEnabled) {
+
+        micToggleBtn.textContent =
+            "🎙️";
+
+        micToggleBtn.classList.add(
+            "mic-off"
+        );
+
+        micToggleBtn.title =
+            "Mikrofonu aç";
+
+
+        voiceHangupBtn?.classList.add(
+            "hidden"
+        );
+
+        return;
+
+    }
+
+
+    voiceHangupBtn?.classList.remove(
+        "hidden"
+    );
+
+
+    if (micMuted) {
+
+        micToggleBtn.textContent =
+            "🔇";
+
+        micToggleBtn.classList.add(
+            "mic-muted"
+        );
+
+        micToggleBtn.title =
+            "Mikrofonu aç";
+
+    } else {
+
+        micToggleBtn.textContent =
+            "🎙️";
+
+        micToggleBtn.classList.add(
+            "mic-on"
+        );
+
+        micToggleBtn.title =
+            "Mikrofonu bağla (danışırsan)";
+
+    }
+
+}
+
+
+function attachRemoteAudio(
+    peerId,
+    stream
+) {
+
+    let audioEl =
+        remoteAudioEls[peerId];
+
+
+    if (!audioEl) {
+
+        audioEl =
+            document.createElement(
+                "audio"
+            );
+
+        audioEl.autoplay =
+            true;
+
+        audioEl.playsInline =
+            true;
+
+        audioEl.dataset.peerId =
+            peerId;
+
+        audioEl.style.display =
+            "none";
+
+        document.body.appendChild(
+            audioEl
+        );
+
+        remoteAudioEls[peerId] =
+            audioEl;
+
+    }
+
+
+    audioEl.srcObject =
+        stream;
+
+
+    audioEl.play().catch(() => {});
+
+
+    setupSpeakingDetector(
+        peerId,
+        stream,
+        speaking => {
+
+            voiceStatusBar?.classList.toggle(
+                "speaking",
+                speaking
+            );
+
+        }
+    );
+
+
+    showVoiceStatus(
+        "💜 Səsli əlaqə qoşuldu"
+    );
+
+}
+
+
+function closePeerConnection(
+    peerId
+) {
+
+    const pc =
+        peerConnections[peerId];
+
+
+    if (pc) {
+
+        try {
+
+            pc.close();
+
+        } catch {}
+
+
+        delete peerConnections[peerId];
+
+    }
+
+
+    const audioEl =
+        remoteAudioEls[peerId];
+
+
+    if (audioEl) {
+
+        audioEl.srcObject =
+            null;
+
+        audioEl.remove();
+
+        delete remoteAudioEls[peerId];
+
+    }
+
+
+    stopSpeakingDetector(
+        peerId
+    );
+
+
+    if (
+        Object.keys(peerConnections).length === 0
+    ) {
+
+        hideVoiceStatus();
+
+    }
+
+}
+
+
+function createPeerConnection(
+    peerId
+) {
+
+    const pc =
+        new RTCPeerConnection(
+            rtcConfig
+        );
+
+
+    peerConnections[peerId] =
+        pc;
+
+
+    if (localStream) {
+
+        localStream
+            .getTracks()
+            .forEach(
+                track => {
+
+                    pc.addTrack(
+                        track,
+                        localStream
+                    );
+
+                }
+            );
+
+    }
+
+
+    pc.onicecandidate =
+        event => {
+
+            if (
+                event.candidate &&
+                socket &&
+                socket.connected
+            ) {
+
+                socket.emit(
+                    "voice-signal",
+                    {
+                        to: peerId,
+                        signal: {
+                            type: "candidate",
+                            candidate: event.candidate
+                        }
+                    }
+                );
+
+            }
+
+        };
+
+
+    pc.ontrack =
+        event => {
+
+            attachRemoteAudio(
+                peerId,
+                event.streams[0]
+            );
+
+        };
+
+
+    pc.onconnectionstatechange =
+        () => {
+
+            if (
+                [
+                    "failed",
+                    "closed"
+                ].includes(
+                    pc.connectionState
+                )
+            ) {
+
+                closePeerConnection(
+                    peerId
+                );
+
+            }
+
+        };
+
+
+    return pc;
+
+}
+
+
+async function callPeer(
+    peerId
+) {
+
+    const pc =
+        createPeerConnection(
+            peerId
+        );
+
+
+    try {
+
+        const offer =
+            await pc.createOffer();
+
+
+        await pc.setLocalDescription(
+            offer
+        );
+
+
+        socket.emit(
+            "voice-signal",
+            {
+                to: peerId,
+                signal: {
+                    type: "offer",
+                    sdp: pc.localDescription
+                }
+            }
+        );
+
+
+        showVoiceStatus(
+            "🎙️ Bağlanır..."
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Voice offer xətası:",
+            error
+        );
+
+    }
+
+}
+
+
+async function handleVoiceSignal(
+    { from, signal }
+) {
+
+    if (!from || !signal) {
+        return;
+    }
+
+
+    let pc =
+        peerConnections[from];
+
+
+    try {
+
+        if (signal.type === "offer") {
+
+            if (!pc) {
+
+                pc =
+                    createPeerConnection(
+                        from
+                    );
+
+            }
+
+
+            await pc.setRemoteDescription(
+                new RTCSessionDescription(
+                    signal.sdp
+                )
+            );
+
+
+            const answer =
+                await pc.createAnswer();
+
+
+            await pc.setLocalDescription(
+                answer
+            );
+
+
+            socket.emit(
+                "voice-signal",
+                {
+                    to: from,
+                    signal: {
+                        type: "answer",
+                        sdp: pc.localDescription
+                    }
+                }
+            );
+
+        } else if (signal.type === "answer") {
+
+            if (pc) {
+
+                await pc.setRemoteDescription(
+                    new RTCSessionDescription(
+                        signal.sdp
+                    )
+                );
+
+            }
+
+        } else if (signal.type === "candidate") {
+
+            if (pc) {
+
+                try {
+
+                    await pc.addIceCandidate(
+                        new RTCIceCandidate(
+                            signal.candidate
+                        )
+                    );
+
+                } catch {}
+
+            }
+
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Voice signal xətası:",
+            error
+        );
+
+    }
+
+}
+
+
+async function startVoiceChat() {
+
+    if (
+        !socket ||
+        !socket.connected
+    ) {
+
+        showToast(
+            "Server bağlantısı yoxdur.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    try {
+
+        localStream =
+            await navigator.mediaDevices.getUserMedia({
+
+                audio: {
+                    echoCancellation: true,
+                    noiseSuppression: true,
+                    autoGainControl: true
+                }
+
+            });
+
+    } catch (error) {
+
+        showToast(
+            "Mikrofona icazə verilmədi 🎙️",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    micEnabled =
+        true;
+
+    micMuted =
+        false;
+
+
+    updateMicButtonUI();
+
+
+    setupSpeakingDetector(
+        "local",
+        localStream,
+        speaking => {
+
+            micToggleBtn?.classList.toggle(
+                "speaking",
+                speaking && !micMuted
+            );
+
+        }
+    );
+
+
+    socket.emit(
+        "voice-on"
+    );
+
+
+    showVoiceStatus(
+        "🎙️ Səsli əlaqə axtarılır..."
+    );
+
+
+    showToast(
+        "Mikrofon aktivdir 🎙️",
+        "success"
+    );
+
+}
+
+
+function stopVoiceChat() {
+
+    micEnabled =
+        false;
+
+    micMuted =
+        false;
+
+
+    if (
+        socket &&
+        socket.connected
+    ) {
+
+        socket.emit(
+            "voice-off"
+        );
+
+    }
+
+
+    Object.keys(peerConnections).forEach(
+        closePeerConnection
+    );
+
+
+    if (localStream) {
+
+        localStream
+            .getTracks()
+            .forEach(
+                track => track.stop()
+            );
+
+        localStream =
+            null;
+
+    }
+
+
+    stopSpeakingDetector(
+        "local"
+    );
+
+
+    updateMicButtonUI();
+
+
+    hideVoiceStatus();
+
+}
+
+
+function toggleMicMute() {
+
+    if (!localStream) {
+        return;
+    }
+
+
+    micMuted =
+        !micMuted;
+
+
+    localStream
+        .getAudioTracks()
+        .forEach(
+            track => {
+
+                track.enabled =
+                    !micMuted;
+
+            }
+        );
+
+
+    if (
+        socket &&
+        socket.connected
+    ) {
+
+        socket.emit(
+            "voice-mute",
+            {
+                muted: micMuted
+            }
+        );
+
+    }
+
+
+    updateMicButtonUI();
+
+}
+
+
+if (micToggleBtn) {
+
+    micToggleBtn.addEventListener(
+        "click",
+        () => {
+
+            if (!micEnabled) {
+
+                startVoiceChat();
+
+            } else {
+
+                toggleMicMute();
+
+            }
+
+        }
+    );
+
+}
+
+
+if (voiceHangupBtn) {
+
+    voiceHangupBtn.addEventListener(
+        "click",
+        stopVoiceChat
+    );
+
+}
+
+
+/*
+=========================================================
 LEAVE
 =========================================================
 */
@@ -4013,6 +5609,9 @@ LEAVE ROOM
 function leaveRoom(
     returnHome = true
 ) {
+
+    stopVoiceChat();
+
 
     if (socket) {
 
