@@ -7,11 +7,34 @@
 
     <meta
         name="viewport"
-        content="width=device-width, initial-scale=1.0"
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    >
+
+    <meta
+        name="theme-color"
+        content="#080814"
+    >
+
+    <meta
+        name="mobile-web-app-capable"
+        content="yes"
+    >
+
+    <meta
+        name="apple-mobile-web-app-capable"
+        content="yes"
+    >
+
+    <meta
+        name="apple-mobile-web-app-status-bar-style"
+        content="black-translucent"
     >
 
     <title>Together Watch ♡</title>
 
+
+    <!-- GOOGLE FONTS -->
+
     <link
         rel="preconnect"
         href="https://fonts.googleapis.com"
@@ -19,7 +42,7 @@
 
     <link
         rel="preconnect"
-        href="https://fonts.googleapis.com"
+        href="https://fonts.gstatic.com"
         crossorigin
     >
 
@@ -28,12 +51,288 @@
         rel="stylesheet"
     >
 
+
+    <!-- MAIN CSS -->
+
     <link
         rel="stylesheet"
         href="/style.css"
     >
 
+
+    <!-- EXTRA VIDEO STYLES -->
+
     <style>
+
+        /*
+        =====================================================
+        VIDEO SOURCE CONTROLS
+        =====================================================
+        */
+
+        .video-source-label {
+            width: 100%;
+            margin-top: 14px;
+            margin-bottom: 7px;
+
+            font-size: 11px;
+            font-weight: 700;
+
+            letter-spacing: 1px;
+
+            color: rgba(255,255,255,0.55);
+        }
+
+
+        /*
+        =====================================================
+        VIDEO INPUT ROW
+        =====================================================
+        */
+
+        .video-input-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 10px;
+            width: 100%;
+        }
+
+
+        .video-input {
+            width: 100%;
+            min-width: 0;
+        }
+
+
+        .paste-btn {
+            min-width: 120px;
+
+            border: 1px solid rgba(189, 138, 255, 0.35);
+            border-radius: 12px;
+
+            background: rgba(139, 76, 255, 0.12);
+            color: #fff;
+
+            padding: 0 16px;
+
+            font-family: inherit;
+            font-weight: 600;
+
+            cursor: pointer;
+
+            transition:
+                transform 0.2s ease,
+                background 0.2s ease,
+                border-color 0.2s ease;
+        }
+
+
+        .paste-btn:hover {
+            background: rgba(139, 76, 255, 0.24);
+            border-color: rgba(189, 138, 255, 0.6);
+            transform: translateY(-1px);
+        }
+
+
+        .paste-btn:active {
+            transform: scale(0.98);
+        }
+
+
+        /*
+        =====================================================
+        LOAD BUTTON
+        =====================================================
+        */
+
+        .video-load-btn {
+            width: 100%;
+            margin-top: 10px;
+        }
+
+
+        /*
+        =====================================================
+        YOUTUBE SEARCH (premium)
+        =====================================================
+        */
+
+        .yt-search-block {
+            width: 100%;
+            margin-bottom: 4px;
+        }
+
+        .search-btn {
+            background:
+                linear-gradient(
+                    135deg,
+                    rgba(168, 92, 255, 0.35),
+                    rgba(255, 112, 189, 0.28)
+                );
+            border-color: rgba(255, 138, 210, 0.45);
+        }
+
+        .search-btn:hover {
+            background:
+                linear-gradient(
+                    135deg,
+                    rgba(168, 92, 255, 0.5),
+                    rgba(255, 112, 189, 0.4)
+                );
+        }
+
+        .link-toggle-btn {
+            display: block;
+            width: 100%;
+            text-align: center;
+            background: none;
+            border: none;
+            color: #bd8aff;
+            font-family: inherit;
+            font-size: 12.5px;
+            font-weight: 600;
+            letter-spacing: .2px;
+            padding: 4px 0 14px;
+            cursor: pointer;
+            opacity: .75;
+            transition: opacity .2s ease;
+        }
+
+        .link-toggle-btn:hover {
+            opacity: 1;
+            text-decoration: underline;
+        }
+
+        .yt-search-results {
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            max-height: 360px;
+            overflow-y: auto;
+            padding: 4px 4px 12px;
+            margin-bottom: 6px;
+        }
+
+        .yt-search-results.hidden {
+            display: none;
+        }
+
+        .yt-search-results::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .yt-search-results::-webkit-scrollbar-thumb {
+            background: rgba(189, 138, 255, 0.35);
+            border-radius: 10px;
+        }
+
+        .yt-result-card {
+            position: relative;
+            border-radius: 14px;
+            overflow: hidden;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(190, 125, 255, 0.18);
+            transition:
+                transform 0.2s ease,
+                border-color 0.2s ease,
+                box-shadow 0.2s ease;
+        }
+
+        .yt-result-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(216, 150, 255, 0.6);
+            box-shadow: 0 14px 30px rgba(145, 70, 255, 0.28);
+        }
+
+        .yt-result-card:hover .yt-result-play {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .yt-result-thumb {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            background: #000;
+            overflow: hidden;
+        }
+
+        .yt-result-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .yt-result-duration {
+            position: absolute;
+            right: 6px;
+            bottom: 6px;
+            padding: 2px 6px;
+            font-size: 10.5px;
+            font-weight: 700;
+            border-radius: 6px;
+            background: rgba(0, 0, 0, 0.75);
+            color: #fff;
+        }
+
+        .yt-result-play {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 42px;
+            height: 42px;
+            display: grid;
+            place-items: center;
+            border-radius: 50%;
+            background: rgba(168, 92, 255, 0.85);
+            color: #fff;
+            font-size: 15px;
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.7);
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            box-shadow: 0 8px 24px rgba(168, 92, 255, 0.5);
+        }
+
+        .yt-result-meta {
+            padding: 8px 10px 10px;
+        }
+
+        .yt-result-title {
+            font-size: 12.5px;
+            font-weight: 600;
+            color: #fff;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            line-height: 1.3;
+        }
+
+        .yt-result-channel {
+            margin-top: 4px;
+            font-size: 11px;
+            color: #a99eb8;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .yt-search-loading,
+        .yt-search-empty {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 22px 10px;
+            font-size: 13px;
+            color: #bd8aff;
+        }
+
+        .dot-anim::after {
+            content: "";
+        }
+
 
         /*
         =====================================================
@@ -44,14 +343,19 @@
         .mp4-player {
             width: 100%;
             height: 100%;
+
             display: block;
+
             background: #000;
+
             object-fit: contain;
         }
+
 
         .mp4-player.hidden {
             display: none;
         }
+
 
         /*
         =====================================================
@@ -60,76 +364,303 @@
         */
 
         .mp4-controls {
-            margin-top: 12px;
+            width: 100%;
+
             display: flex;
+
             gap: 10px;
+
             align-items: center;
+
             flex-wrap: wrap;
         }
 
+
         .mp4-file-input {
             flex: 1;
+
             min-width: 220px;
+
             padding: 12px;
+
             border-radius: 12px;
-            border: 1px solid rgba(145, 92, 255, 0.35);
-            background: rgba(18, 16, 38, 0.72);
+
+            border:
+                1px solid
+                rgba(145, 92, 255, 0.35);
+
+            background:
+                rgba(18, 16, 38, 0.72);
+
             color: white;
+
+            font-family: inherit;
         }
+
 
         .mp4-file-input::file-selector-button {
             margin-right: 10px;
+
             padding: 8px 12px;
+
             border: 0;
+
             border-radius: 8px;
+
             cursor: pointer;
+
             background: #8b4cff;
+
             color: white;
+
             font-weight: 600;
         }
 
+
         .mp4-status {
             width: 100%;
+
             font-size: 13px;
+
             color: #bd8aff;
+
             min-height: 18px;
+
+            margin-top: 6px;
         }
 
-        .video-source-label {
-            width: 100%;
-            margin-top: 8px;
-            margin-bottom: 4px;
+
+        /*
+        =====================================================
+        CONNECTION STATUS
+        =====================================================
+        */
+
+        .connection-status {
+            display: inline-flex;
+
+            align-items: center;
+
+            gap: 6px;
+
             font-size: 12px;
-            opacity: 0.7;
-            letter-spacing: 0.5px;
+
+            margin-left: 10px;
+
+            color: #4ee2c2;
+        }
+
+
+        .connection-status.disconnected {
+            color: #ff6b8a;
+        }
+
+
+        .connection-status.connecting {
+            color: #f0bc58;
+        }
+
+
+        /*
+        =====================================================
+        TOAST
+        =====================================================
+        */
+
+        .aura-toast {
+            position: fixed;
+
+            left: 50%;
+
+            bottom:
+                calc(
+                    24px +
+                    env(safe-area-inset-bottom)
+                );
+
+            transform:
+                translate(-50%, 20px);
+
+            z-index: 99999;
+
+            width: max-content;
+
+            max-width:
+                calc(100vw - 30px);
+
+            padding: 12px 18px;
+
+            border-radius: 14px;
+
+            background:
+                rgba(18, 16, 38, 0.95);
+
+            border:
+                1px solid
+                rgba(189, 138, 255, 0.4);
+
+            box-shadow:
+                0 12px 40px
+                rgba(0,0,0,0.35);
+
+            color: #fff;
+
+            font-size: 13px;
+
+            opacity: 0;
+
+            pointer-events: none;
+
+            transition:
+                opacity 0.25s ease,
+                transform 0.25s ease;
+
+            backdrop-filter: blur(14px);
+        }
+
+
+        .aura-toast.show {
+            opacity: 1;
+
+            transform:
+                translate(-50%, 0);
+        }
+
+
+        /*
+        =====================================================
+        MOBILE
+        =====================================================
+        */
+
+        @media (max-width: 650px) {
+
+            .video-input-row {
+                grid-template-columns: 1fr;
+            }
+
+
+            .paste-btn {
+                width: 100%;
+
+                min-height: 46px;
+            }
+
+
+            .video-load-btn {
+                min-height: 48px;
+            }
+
+
+            .mp4-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+
+            .yt-search-results {
+                grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+                max-height: 300px;
+            }
+
+
+            .mp4-file-input {
+                min-width: 0;
+                width: 100%;
+            }
+
+
+            .mp4-controls .primary-btn {
+                width: 100%;
+                min-height: 46px;
+            }
+
+
+            .connection-status {
+                margin-left: 0;
+                margin-top: 4px;
+            }
+
+        }
+
+
+        /*
+        =====================================================
+        SAFE AREA
+        =====================================================
+        */
+
+        .topbar {
+            padding-top:
+                max(
+                    12px,
+                    env(safe-area-inset-top)
+                );
+        }
+
+
+        .chat-form {
+            padding-bottom:
+                max(
+                    10px,
+                    env(safe-area-inset-bottom)
+                );
         }
 
     </style>
 
 </head>
 
+
 <body>
 
-    <!-- BACKGROUND -->
+
+    <!-- =================================================
+         BACKGROUND
+    ================================================= -->
 
     <div class="background">
 
         <div class="stars"></div>
 
         <div class="glow glow-1"></div>
+
         <div class="glow glow-2"></div>
 
-        <div class="flower flower-1">🌸</div>
-        <div class="flower flower-2">🌷</div>
-        <div class="flower flower-3">🌺</div>
-        <div class="flower flower-4">🌹</div>
-        <div class="flower flower-5">🌸</div>
-        <div class="flower flower-6">🌷</div>
+
+        <!-- FLOWERS -->
+
+        <div class="flower flower-1">
+            🌸
+        </div>
+
+        <div class="flower flower-2">
+            🌷
+        </div>
+
+        <div class="flower flower-3">
+            🌺
+        </div>
+
+        <div class="flower flower-4">
+            🌹
+        </div>
+
+        <div class="flower flower-5">
+            🌸
+        </div>
+
+        <div class="flower flower-6">
+            🌷
+        </div>
 
     </div>
 
 
-    <!-- LANDING -->
+
+    <!-- =================================================
+         LANDING
+    ================================================= -->
 
     <section
         id="landing"
@@ -138,40 +669,59 @@
 
         <div class="landing-card">
 
+
             <div class="heart-logo">
                 ♡
             </div>
+
 
             <div class="eyebrow">
                 TOGETHER • ANYWHERE • TOGETHER
             </div>
 
+
             <h1>
-                Filmə <span>birlikdə</span><br>
+                Filmə
+                <span>birlikdə</span>
+                <br>
                 baxaq.
             </h1>
+
 
             <p>
                 Eyni otaqda olunmasanız belə,
                 eyni filmi eyni anda izləyin.
             </p>
 
+
             <div class="landing-buttons">
+
 
                 <button
                     id="createRoomBtn"
                     class="primary-btn"
+                    type="button"
                 >
-                    <span>✦</span>
+
+                    <span>
+                        ✦
+                    </span>
+
                     Yeni otaq yarat
+
                 </button>
+
 
                 <button
                     id="joinExistingBtn"
                     class="secondary-btn"
+                    type="button"
                 >
+
                     Otağa qoşul
+
                 </button>
+
 
             </div>
 
@@ -180,7 +730,10 @@
     </section>
 
 
-    <!-- JOIN MODAL -->
+
+    <!-- =================================================
+         JOIN MODAL
+    ================================================= -->
 
     <div
         id="joinModal"
@@ -189,67 +742,96 @@
 
         <div class="modal-card">
 
+
             <button
                 class="close-modal"
                 id="closeJoinModal"
+                type="button"
+                aria-label="Bağla"
             >
                 ×
             </button>
+
 
             <div class="modal-icon">
                 ♡
             </div>
 
+
             <h2>
                 Otağa qoşul
             </h2>
 
+
             <p>
-                Dostunun göndərdiyi otaq kodunu daxil et.
+                Dostunun göndərdiyi otaq
+                kodunu daxil et.
             </p>
+
 
             <input
                 id="roomCodeInput"
                 class="text-input"
+                type="text"
+                inputmode="text"
+                autocomplete="off"
+                autocapitalize="characters"
+                spellcheck="false"
                 placeholder="Məsələn: A7K92P"
                 maxlength="6"
             >
 
+
             <input
                 id="joinNameInput"
                 class="text-input"
+                type="text"
+                autocomplete="nickname"
                 placeholder="Adın"
                 maxlength="30"
             >
 
+
             <button
                 id="joinRoomBtn"
                 class="primary-btn full"
+                type="button"
             >
                 Otağa daxil ol
             </button>
+
 
         </div>
 
     </div>
 
 
-    <!-- ROOM -->
+
+    <!-- =================================================
+         ROOM
+    ================================================= -->
 
     <main
         id="roomPage"
         class="room-page hidden"
     >
 
-        <!-- TOP BAR -->
+
+        <!-- =================================================
+             TOP BAR
+        ================================================= -->
 
         <header class="topbar">
+
+
+            <!-- BRAND -->
 
             <div class="brand">
 
                 <div class="brand-heart">
                     ♡
                 </div>
+
 
                 <div>
 
@@ -266,56 +848,112 @@
             </div>
 
 
+
+            <!-- ROOM INFO -->
+
             <div class="room-info">
 
                 <span>
                     OTAQ
                 </span>
 
-                <strong id="roomCodeDisplay">
+                <strong
+                    id="roomCodeDisplay"
+                >
                     ------
                 </strong>
 
             </div>
 
 
+
+            <!-- TOP ACTIONS -->
+
             <div class="top-actions">
+
+
+                <!-- SHARE -->
+
+                <button
+                    id="shareRoomBtn"
+                    class="top-btn"
+                    type="button"
+                    title="Otağı paylaş"
+                >
+
+                    📤
+
+                    <span>
+                        Paylaş
+                    </span>
+
+                </button>
+
+
+                <!-- COPY -->
 
                 <button
                     id="copyRoomBtn"
                     class="top-btn"
+                    type="button"
+                    title="Otaq linkini kopyala"
                 >
-                    🔗 <span>Linki kopyala</span>
+
+                    🔗
+
+                    <span>
+                        Linki kopyala
+                    </span>
+
                 </button>
+
+
+                <!-- LEAVE -->
 
                 <button
                     id="leaveBtn"
                     class="top-btn danger"
+                    type="button"
                 >
                     Çıx
                 </button>
+
 
             </div>
 
         </header>
 
 
-        <!-- CONTENT -->
+
+        <!-- =================================================
+             ROOM CONTENT
+        ================================================= -->
 
         <div class="room-layout">
 
-            <!-- LEFT -->
+
+            <!-- =================================================
+                 WATCH SECTION
+            ================================================= -->
 
             <section class="watch-section">
 
+
+                <!-- MOVIE HEADER -->
+
                 <div class="movie-header">
+
 
                     <div>
 
                         <div class="live-indicator">
+
                             <span></span>
+
                             LIVE ROOM
+
                         </div>
+
 
                         <h2 id="movieTitle">
                             Film seçilməyib
@@ -323,19 +961,33 @@
 
                     </div>
 
+
+
+                    <!-- HOST BADGE -->
+
                     <div
                         id="hostBadge"
                         class="host-badge hidden"
                     >
-                        👑 Sən hostsan
+
+                        👑
+                        Sən hostsan
+
                     </div>
+
 
                 </div>
 
 
-                <!-- PLAYER -->
+
+                <!-- =================================================
+                     VIDEO PLAYER
+                ================================================= -->
 
                 <div class="video-wrapper">
+
+
+                    <!-- YOUTUBE PLAYER -->
 
                     <div
                         id="player"
@@ -343,93 +995,233 @@
                     >
                     </div>
 
+
+                    <!-- MP4 PLAYER -->
+
+                    <video
+                        id="mp4Player"
+                        class="mp4-player hidden"
+                        playsinline
+                        preload="metadata"
+                    >
+                    </video>
+
+
+                    <!-- EMPTY PLAYER OVERLAY -->
+
                     <div
                         id="playerOverlay"
                         class="player-overlay"
                     >
 
+
                         <div class="overlay-heart">
                             ♡
                         </div>
 
+
                         <span>
                             Film seçilməsini gözləyirik...
                         </span>
+
 
                     </div>
 
                 </div>
 
 
-                <!-- HOST CONTROLS -->
+
+                <!-- =================================================
+                     VIDEO CONTROLS
+                ================================================= -->
 
                 <div
                     id="hostControls"
                     class="host-controls hidden"
                 >
 
-                    <!-- YOUTUBE -->
+
+                    <!-- ================================
+                         YOUTUBE
+                    ================================= -->
 
                     <div class="video-source-label">
                         YOUTUBE
                     </div>
 
-                    <div class="mp4-controls">
 
-                        <input
-                            id="videoUrlInput"
-                            class="video-input"
-                            placeholder="YouTube film linkini bura yapışdır..."
-                        >
+                    <!-- ================================
+                         YOUTUBE SEARCH (link yapışdırmadan)
+                    ================================= -->
 
-                        <button
-                            id="loadVideoBtn"
-                            class="primary-btn"
+                    <div class="yt-search-block">
+
+                        <div class="video-input-row">
+
+                            <input
+                                id="youtubeSearchInput"
+                                class="video-input"
+                                type="text"
+                                autocomplete="off"
+                                autocapitalize="off"
+                                spellcheck="false"
+                                enterkeyhint="search"
+                                placeholder="Film adını yaz və axtar... 🔎"
+                            >
+
+                            <button
+                                id="youtubeSearchBtn"
+                                class="paste-btn search-btn"
+                                type="button"
+                            >
+
+                                🔎
+
+                                <span>
+                                    Axtar
+                                </span>
+
+                            </button>
+
+                        </div>
+
+
+                        <div
+                            id="youtubeSearchResults"
+                            class="yt-search-results hidden"
                         >
-                            🎬 YouTube filmi qoş
-                        </button>
+                        </div>
 
                     </div>
 
 
-                    <!-- MP4 -->
+                    <!-- ================================
+                         YOUTUBE LINK (alternativ üsul)
+                    ================================= -->
+
+                    <button
+                        id="toggleLinkModeBtn"
+                        type="button"
+                        class="link-toggle-btn"
+                    >
+                        yaxud linki əl ilə yapışdır ▾
+                    </button>
+
+                    <div
+                        id="linkModeBlock"
+                        class="mp4-controls hidden"
+                    >
+
+
+                        <div
+                            class="video-input-row"
+                        >
+
+
+                            <input
+                                id="videoUrlInput"
+                                class="video-input"
+                                type="url"
+                                inputmode="url"
+                                autocomplete="off"
+                                autocapitalize="off"
+                                spellcheck="false"
+                                enterkeyhint="go"
+                                placeholder="YouTube film linkini bura yapışdır..."
+                            >
+
+
+                            <button
+                                id="pasteVideoBtn"
+                                class="paste-btn"
+                                type="button"
+                            >
+
+                                📋
+
+                                <span>
+                                    Yapışdır
+                                </span>
+
+                            </button>
+
+
+                        </div>
+
+
+                        <button
+                            id="loadVideoBtn"
+                            class="primary-btn video-load-btn"
+                            type="button"
+                        >
+
+                            🎬
+                            YouTube filmi qoş
+
+                        </button>
+
+
+                    </div>
+
+
+
+                    <!-- ================================
+                         MP4
+                    ================================= -->
 
                     <div class="video-source-label">
                         KOMPÜTERDƏN MP4
                     </div>
 
+
                     <div class="mp4-controls">
+
 
                         <input
                             id="mp4FileInput"
                             class="mp4-file-input"
                             type="file"
-                            accept="video/mp4,.mp4"
+                            accept="video/mp4,.mp4,video/x-m4v"
                         >
+
 
                         <button
                             id="uploadMp4Btn"
                             class="primary-btn"
                             type="button"
                         >
-                            📁 MP4 filmi yüklə
+
+                            📁
+                            MP4 filmi yüklə
+
                         </button>
 
+
                     </div>
+
 
                     <div
                         id="mp4Status"
                         class="mp4-status"
-                    ></div>
+                    >
+                    </div>
+
 
                 </div>
 
 
-                <!-- WATCH STATUS -->
+
+                <!-- =================================================
+                     WATCH STATUS
+                ================================================= -->
 
                 <div class="watch-status">
 
+
+                    <!-- PEOPLE -->
+
                     <div class="watching-people">
+
 
                         <div
                             id="avatarStack"
@@ -437,11 +1229,15 @@
                         >
                         </div>
 
+
                         <div>
 
-                            <strong id="watchingCount">
+                            <strong
+                                id="watchingCount"
+                            >
                                 0 nəfər
                             </strong>
+
 
                             <span>
                                 birlikdə izləyir
@@ -449,41 +1245,72 @@
 
                         </div>
 
+
                     </div>
 
 
+
+                    <!-- SYNC -->
+
                     <div class="sync-status">
 
-                        <span class="sync-dot"></span>
+
+                        <span
+                            class="sync-dot"
+                        >
+                        </span>
+
 
                         <span>
                             Sinxron izləmə aktivdir
                         </span>
 
+
+                        <span
+                            id="connectionStatus"
+                            class="connection-status connected"
+                        >
+                            ● Bağlı
+                        </span>
+
+
                     </div>
 
+
                 </div>
+
 
             </section>
 
 
-            <!-- CHAT -->
+
+            <!-- =================================================
+                 CHAT
+            ================================================= -->
 
             <aside class="chat-panel">
 
+
+                <!-- CHAT HEADER -->
+
                 <div class="chat-header">
 
+
                     <div>
+
 
                         <div class="chat-title">
                             Söhbət
                         </div>
 
+
                         <div class="chat-subtitle">
                             Filmə baxarkən danışın ♡
                         </div>
 
+
                     </div>
+
 
                     <div
                         id="onlineCount"
@@ -492,72 +1319,121 @@
                         0
                     </div>
 
+
                 </div>
 
+
+
+                <!-- CHAT MESSAGES -->
 
                 <div
                     id="chatMessages"
                     class="chat-messages"
                 >
 
+
                     <div class="welcome-message">
+
 
                         <div class="welcome-heart">
                             ♡
                         </div>
 
+
                         <strong>
                             Otağa xoş gəldin
                         </strong>
+
 
                         <span>
                             Film başlayanda burada
                             birlikdə söhbət edə bilərsiniz.
                         </span>
 
+
                     </div>
+
 
                 </div>
 
 
+
+                <!-- CHAT FORM -->
+
                 <form
                     id="chatForm"
                     class="chat-form"
+                    autocomplete="off"
                 >
+
 
                     <input
                         id="chatInput"
+                        type="text"
                         autocomplete="off"
                         maxlength="500"
                         placeholder="Bir şey yaz..."
                     >
 
+
                     <button
                         type="submit"
+                        aria-label="Mesaj göndər"
                     >
                         ➤
                     </button>
 
+
                 </form>
+
 
             </aside>
 
+
         </div>
+
 
     </main>
 
 
-    <!-- SOCKET.IO -->
+
+    <!-- =================================================
+         TOAST
+    ================================================= -->
+
+    <div
+        id="toast"
+        class="aura-toast"
+        aria-live="polite"
+    >
+    </div>
+
+
+
+    <!-- =================================================
+         SOCKET.IO
+    ================================================= -->
 
     <script src="/socket.io/socket.io.js"></script>
 
-    <!-- YOUTUBE API -->
 
-    <script src="https://www.youtube.com/iframe_api"></script>
 
-    <!-- APP -->
+    <!-- =================================================
+         YOUTUBE IFRAME API
+    ================================================= -->
+
+    <script
+        src="https://www.youtube.com/iframe_api"
+    ></script>
+
+
+
+    <!-- =================================================
+         APPLICATION
+    ================================================= -->
 
     <script src="/app.js"></script>
+
 
 </body>
 
